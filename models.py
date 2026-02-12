@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-import math
 
-CORE_WEIGHT_100MM = 0.026  # кг
-MATERIAL_WEIGHT_M2 = 0.009  # кг
+CORE_WEIGHT_100MM = 0.026  # kg
+MATERIAL_WEIGHT_M2 = 0.009  # kg
+DEFAULT_ROLL_DIAMETER_MM = 85
 
 ROLL_DIAMETERS = {
     300: 64,
@@ -11,13 +11,11 @@ ROLL_DIAMETERS = {
 }
 
 BOXES = [
-    (260,195,110,0.1),
-    (260,195,245,0.2),
-    (300,300,220,0.2),
-    (300,300,255,0.3),
-    (300,300,315,0.3),
-    (200,200,220,0.2),
-    (400,200,320,0.3),
+    (260, 195, 110, 0.1),
+    (260, 195, 245, 0.2),
+    (300, 300, 220, 0.2),
+    (300, 300, 255, 0.3),
+    (300, 300, 315, 0.3),
 ]
 
 @dataclass
@@ -27,7 +25,8 @@ class Roll:
 
     @property
     def diameter_mm(self):
-        return ROLL_DIAMETERS.get(self.length_m, 85)
+        rounded_length = int(round(self.length_m))
+        return ROLL_DIAMETERS.get(rounded_length, DEFAULT_ROLL_DIAMETER_MM)
 
     def weight(self):
         core_weight = CORE_WEIGHT_100MM * (self.width_mm / 100)

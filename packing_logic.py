@@ -1,6 +1,7 @@
 ﻿from models import BOXES, Box
 
-MAX_BOX_WEIGHT = 20
+MAX_BOX_WEIGHT = 21.0
+EXCLUDED_BOX_DIMS = {(400, 200, 320), (200, 200, 220)}
 
 # Full-box capacity matrix keyed by (box_dims) -> {(roll_width, roll_length): rolls_per_box}
 PACKING_MATRIX = {
@@ -118,6 +119,9 @@ def _matrix_candidates(roll):
     candidates = []
 
     for box_dims, rules in PACKING_MATRIX.items():
+        if box_dims in EXCLUDED_BOX_DIMS:
+            continue
+
         per_box = rules.get(roll_key)
         if not per_box:
             continue
@@ -133,6 +137,9 @@ def _matrix_candidates(roll):
 def _fallback_candidates(roll):
     candidates = []
     for width, length, height, weight in BOXES:
+        if (width, length, height) in EXCLUDED_BOX_DIMS:
+            continue
+
         box = Box(width, length, height, weight)
         capacity = _max_rolls_for_box(box, roll)
         if capacity > 0:
@@ -192,12 +199,14 @@ def _best_plan_min_free_space(total_quantity, full_candidates, one_box_candidate
             total_boxes = full_count + (1 if remaining > 0 else 0)
             partial_volume = partial_box.volume() if partial_box else 0
             partial_weight = partial_box.weight if partial_box else 0.0
+            total_volume = full_count * full_box.volume() + partial_volume
+            total_tare_weight = full_count * full_box.weight + partial_weight
 
             score = (
-                free_space,
                 total_boxes,
-                partial_volume,
-                partial_weight,
+                free_space,
+                total_volume,
+                total_tare_weight,
                 -full_capacity,
             )
 

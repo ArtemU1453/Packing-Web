@@ -4,10 +4,9 @@
 
 - Matrix based full box packaging
 - Smart remainder box optimization
-- Weight control (max 20 kg)
-- 3D visualization
-- Animated packing
-- Industrial Dark GUI
+- Weight control (max 21 kg)
+- Industrial GUI
+- Input parameters + packing report
 - EXE ready
 
 ## Build EXE
