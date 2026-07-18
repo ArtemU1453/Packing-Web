@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Расчет упаковки</title>
+<meta name="theme-color" content="#050B1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Упаковка">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  --bg:#050B1A; --bg2:#0B1A32;
+  --panel:#0C1629; --panel-alt:#11233E; --deep:#091225;
+  --text:#D7E7FF; --muted:#7B91B7; --metal:#C6D8F6;
+  --gold:#F1C65A; --gold-a:#FFD775;
+  --green:#68C96B; --green-a:#7DDA80;
+  --cyan:#3CB8D9;
+  --line:#2B4E78; --line-soft:#1A3457;
+  --entry:#13233B; --out-bg:#0B1324; --out-text:#D0DEFA;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html{height:100%;}
+body{
+  min-height:100%;
+  font-family:"Bahnschrift","Arial Narrow",-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:linear-gradient(180deg,#020814 0%,#0B1A32 100%) fixed;
+  color:var(--text);
+  padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 16px);
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:radial-gradient(#17355C 1px, transparent 1px);
+  background-size:17px 10px; opacity:.5;
+}
+.wrap{position:relative; z-index:1; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px;}
+
+header{
+  background:var(--panel-alt);
+  border:1px solid var(--line);
+  border-top:2px solid #2B5D92;
+  padding:14px 16px 12px;
+}
+h1{
+  color:var(--metal); font-size:19px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+}
+.sub{
+  color:var(--muted); font-family:ui-monospace,Consolas,Menlo,monospace;
+  font-size:11px; margin-top:4px;
+}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line-soft);
+  padding:16px;
+}
+.panel h2{
+  color:var(--metal); font-size:15px; font-weight:700; margin-bottom:14px;
+  letter-spacing:.03em;
+}
+label{
+  display:block; font-size:13px; color:var(--text); margin-bottom:5px;
+}
+input{
+  width:100%;
+  background:var(--entry);
+  border:1px solid var(--line);
+  color:var(--metal);
+  font-family:ui-monospace,Consolas,Menlo,monospace;
+  font-size:16px;
+  padding:12px;
+  margin-bottom:14px;
+  border-radius:0;
+  outline:none;
+  appearance:none;
+}
+input:focus{border-color:var(--cyan);}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+.btns{display:flex; gap:10px; margin-top:4px;}
+button{
+  border:1px solid var(--line);
+  font-family:inherit; font-weight:700; font-size:14px;
+  padding:13px 14px; cursor:pointer; border-radius:0;
+  letter-spacing:.02em;
+  touch-action:manipulation;
+}
+#calc{flex:1; background:var(--green); color:#04111F;}
+#calc:active{background:var(--green-a);}
+#clear{background:var(--gold); color:#1A1D24;}
+#clear:active{background:var(--gold-a);}
+
+.err{
+  display:none;
+  margin-top:12px; padding:10px 12px;
+  border:1px solid #8A3B3B; background:#2A1220;
+  color:#F0A9A9;
+  font-family:ui-monospace,Consolas,Menlo,monospace; font-size:12px;
+}
+.err.show{display:block;}
+
+.out{
+  background:var(--out-bg);
+  border:1px solid var(--line);
+  color:var(--out-text);
+  font-family:ui-monospace,Consolas,Menlo,monospace;
+  font-size:12.5px;
+  line-height:1.55;
+  padding:12px;
+  min-height:120px;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.out .hdr{color:var(--gold); font-weight:700;}
+.out .mut{color:var(--muted);}
+.out:empty::before{
+  content:"Введите параметры и нажмите «Рассчитать упаковку». Здесь появится отчет по коробкам и весу партии.";
+  color:var(--muted);
+}
+.foot{
+  color:var(--muted); font-size:10.5px; text-align:center;
+  font-family:ui-monospace,Consolas,Menlo,monospace;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Расчет упаковки</h1>
+    <div class="sub">Ввод параметров и отчет по упаковке готовых рулонов</div>
+  </header>
+
+  <section class="panel">
+    <h2>Параметры</h2>
+    <label for="w">Ширина рулона (мм)</label>
+    <input id="w" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next">
+    <label for="l">Намотка (м)</label>
+    <input id="l" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next">
+    <label for="q">Количество</label>
+    <input id="q" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done">
+    <div class="btns">
+      <button id="calc">Рассчитать упаковку</button>
+      <button id="clear">Очистить</button>
+    </div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Отчет по упаковке</h2>
+    <div class="out" id="out"></div>
+  </section>
+
+  <div class="foot">MAX 21.0 кг / коробка · офлайн-версия</div>
+</div>
+
+<script>
+"use strict";
+/* ==== models.py ==== */
+const CORE_WEIGHT_100MM = 0.026;
+const MATERIAL_WEIGHT_M2 = 0.009;
+const DEFAULT_ROLL_DIAMETER_MM = 85;
+const ROLL_DIAMETERS = {300:64, 450:74, 600:85};
+
+const BOXES = [
+  [260,195,110,0.1],
+  [260,195,245,0.2],
+  [300,300,220,0.2],
+  [300,300,255,0.3],
+  [300,300,315,0.3],
+];
+
+function rollDiameter(roll){
+  const rl = Math.round(roll.length_m);
+  return ROLL_DIAMETERS[rl] !== undefined ? ROLL_DIAMETERS[rl] : DEFAULT_ROLL_DIAMETER_MM;
+}
+function rollWeight(roll){
+  const core = CORE_WEIGHT_100MM * (roll.width_mm/100);
+  const area = (roll.width_mm/1000) * roll.length_m;
+  return core + area * MATERIAL_WEIGHT_M2;
+}
+function boxVolume(b){ return b.width * b.length * b.height; }
+
+/* ==== packing_logic.py ==== */
+const MAX_BOX_WEIGHT = 21.0;
+const EXCLUDED_BOX_DIMS = new Set(["400x200x320","200x200x220"]);
+const dimsKey = (w,l,h)=>w+"x"+l+"x"+h;
+
+const PACKING_MATRIX = {
+  "300x300x220": {
+    "20x300":200,"20x450":160,"20x600":120,
+    "44x300":100,"44x450":80,
+    "45x300":100,"45x450":80,
+    "50x300":80,"50x450":64,
+    "55x300":80,"55x450":64,"55x600":48,
+    "56x300":80,"56x450":64,
+    "70x300":60,"70x450":48,
+    "75x300":60,"75x450":48,
+    "90x300":40,"90x450":32,"90x600":24,
+    "95x300":40,"95x450":32,"95x600":24,
+    "100x300":40,"100x450":32,"100x600":24,
+    "104x300":40,"104x450":32,"104x600":24,
+    "110x300":40,"110x450":32,"110x600":24,
+    "220x300":20,"220x450":16
+  },
+  "300x300x255": {
+    "25x300":200,"25x450":160,"25x600":120,
+    "30x300":160,"30x450":128,"30x600":96,
+    "32x300":140,"32x450":112,"32x600":84,
+    "33x300":140,"33x450":112,"33x600":84,
+    "35x300":140,"35x450":112,"35x500":91,"35x600":84,
+    "40x300":120,"40x450":96,
+    "60x300":80,"60x450":64,
+    "64x300":80,"64x450":64,
+    "75x600":36,
+    "80x300":60,"80x450":48,"80x600":36,
+    "84x300":60,"84x450":48,"84x600":36,
+    "120x300":40,"120x450":32
+  },
+  "300x300x315": {
+    "150x300":40,"150x450":32,
+    "260x300":20,"260x450":16
+  }
+};
+
+const BOX_WEIGHTS = {};
+for (const [w,l,h,wt] of BOXES) BOX_WEIGHTS[dimsKey(w,l,h)] = wt;
+
+const MATRIX_BOX_DIMS = {
+  "300x300x220":[300,300,220],
+  "300x300x255":[300,300,255],
+  "300x300x315":[300,300,315]
+};
+
+function buildBox(dims){
+  const [w,l,h] = dims;
+  const wt = BOX_WEIGHTS[dimsKey(w,l,h)] || 0.0;
+  return {width:w, length:l, height:h, weight:wt};
+}
+
+function weightLimitedCapacity(box, roll){
+  const rw = rollWeight(roll);
+  const avail = MAX_BOX_WEIGHT - box.weight;
+  if (rw <= 0 || avail <= 0) return 0;
+  return Math.floor(avail / rw);
+}
+
+function geometricCapacity(box, roll){
+  const d = rollDiameter(roll);
+  if (d <= 0 || roll.width_mm <= 0) return 0;
+  const cols = Math.floor(box.width / d);
+  const rows = Math.floor(box.length / d);
+  const layers = Math.floor(box.height / roll.width_mm);
+  return cols * rows * layers;
+}
+
+function maxRollsForBox(box, roll){
+  return Math.max(0, Math.min(geometricCapacity(box, roll), weightLimitedCapacity(box, roll)));
+}
+
+function matrixCandidates(roll){
+  const rollKey = Math.round(roll.width_mm) + "x" + Math.round(roll.length_m);
+  const out = [];
+  for (const boxDimsKey in PACKING_MATRIX){
+    if (EXCLUDED_BOX_DIMS.has(boxDimsKey)) continue;
+    let perBox = PACKING_MATRIX[boxDimsKey][rollKey];
+    if (!perBox) continue;
+    const box = buildBox(MATRIX_BOX_DIMS[boxDimsKey]);
+    perBox = Math.min(perBox, weightLimitedCapacity(box, roll));
+    if (perBox > 0) out.push([box, perBox]);
+  }
+  return out;
+}
+
+function fallbackCandidates(roll){
+  const out = [];
+  for (const [w,l,h,wt] of BOXES){
+    if (EXCLUDED_BOX_DIMS.has(dimsKey(w,l,h))) continue;
+    const box = {width:w, length:l, height:h, weight:wt};
+    const cap = maxRollsForBox(box, roll);
+    if (cap > 0) out.push([box, cap]);
+  }
+  return out;
+}
+
+function singleBoxCandidates(roll){
+  const map = new Map();
+  for (const [box,cap] of fallbackCandidates(roll)){
+    map.set(dimsKey(box.width,box.length,box.height), [box,cap]);
+  }
+  for (const [box,cap] of matrixCandidates(roll)){
+    const k = dimsKey(box.width,box.length,box.height);
+    const cur = map.get(k);
+    if (!cur || cap > cur[1]) map.set(k, [box,cap]);
+  }
+  return Array.from(map.values());
+}
+
+function bestFittingBox(candidates, required){
+  const fitting = candidates.filter(it => it[1] >= required);
+  if (!fitting.length) return null;
+  let best = null, bestKey = null;
+  for (const it of fitting){
+    const key = [boxVolume(it[0]), it[1]-required, it[0].weight];
+    if (best === null || cmpArr(key, bestKey) < 0){ best = it; bestKey = key; }
+  }
+  return best;
+}
+
+function cmpArr(a, b){
+  for (let i = 0; i < a.length; i++){
+    if (a[i] < b[i]) return -1;
+    if (a[i] > b[i]) return 1;
+  }
+  return 0;
+}
+
+function bestPlanMinFreeSpace(totalQty, fullCandidates, oneBoxCandidates){
+  let best = null;
+  for (const [fullBox, fullCap] of fullCandidates){
+    const maxFull = Math.floor(totalQty / fullCap);
+    for (let fullCount = maxFull; fullCount >= 0; fullCount--){
+      const remaining = totalQty - fullCount * fullCap;
+      let freeSpace, partialBox;
+      if (remaining === 0){
+        freeSpace = 0; partialBox = null;
+      } else {
+        const fit = bestFittingBox(oneBoxCandidates, remaining);
+        if (!fit) continue;
+        partialBox = fit[0];
+        freeSpace = fit[1] - remaining;
+      }
+      const totalBoxes = fullCount + (remaining > 0 ? 1 : 0);
+      const pVol = partialBox ? boxVolume(partialBox) : 0;
+      const pWt = partialBox ? partialBox.weight : 0.0;
+      const totalVolume = fullCount * boxVolume(fullBox) + pVol;
+      const totalTare = fullCount * fullBox.weight + pWt;
+      const score = [totalBoxes, freeSpace, totalVolume, totalTare, -fullCap];
+      if (best === null || cmpArr(score, best.score) < 0){
+        best = {score, fullBox, fullCap, fullCount, remaining, partialBox};
+      }
+    }
+  }
+  return best;
+}
+
+function packRolls(roll, quantity){
+  const boxesUsed = [];
+  const remaining = Math.trunc(quantity);
+  if (remaining <= 0) return boxesUsed;
+
+  const oneBox = singleBoxCandidates(roll);
+  if (!oneBox.length) throw new Error("Нет доступной коробки для данного типа рулона.");
+
+  const matrix = matrixCandidates(roll);
+  const fullCandidates = matrix.length ? matrix : oneBox;
+  const plan = bestPlanMinFreeSpace(remaining, fullCandidates, oneBox);
+  if (!plan) throw new Error("Не удалось подобрать комбинацию упаковки для данного типа рулона.");
+
+  for (let i = 0; i < plan.fullCount; i++) boxesUsed.push([plan.fullBox, plan.fullCap]);
+  if (plan.remaining > 0) boxesUsed.push([plan.partialBox, plan.remaining]);
+  return boxesUsed;
+}
+
+/* ==== gui ==== */
+const $ = id => document.getElementById(id);
+const err = $("err"), out = $("out");
+
+function showError(msg){ err.textContent = msg; err.classList.add("show"); }
+function hideError(){ err.classList.remove("show"); }
+
+function parseNum(s){
+  s = s.trim().replace(",", ".");
+  if (s === "" || !/^-?\d*\.?\d+$/.test(s)) return NaN;
+  return parseFloat(s);
+}
+
+function ceil01(x){
+  return Math.ceil(x*10)/10;
+}
+
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function calculate(){
+  hideError();
+  const width = parseNum($("w").value);
+  const length = parseNum($("l").value);
+  const qtyRaw = parseNum($("q").value);
+
+  if (isNaN(width) || isNaN(length) || isNaN(qtyRaw) || !Number.isInteger(qtyRaw)){
+    showError("Введите числовые значения ширины, намотки и количества.");
+    return;
+  }
+  const qty = qtyRaw;
+  if (width <= 0 || length <= 0 || qty <= 0){
+    showError("Все значения должны быть больше нуля.");
+    return;
+  }
+
+  const roll = {width_mm: width, length_m: length};
+  let result;
+  try {
+    result = packRolls(roll, qty);
+    if (!result.length) throw new Error("Модуль упаковки вернул пустой результат.");
+  } catch(e){
+    showError(e.message);
+    return;
+  }
+
+  let html = '<span class="hdr">СВОДКА УПАКОВКИ ГОТОВЫХ РУЛОНОВ</span>\n';
+  html += '<span class="mut">Параметры: ширина ' + width.toFixed(0) + ' мм, намотка ' +
+          length.toFixed(0) + ' м, количество ' + qty + ' шт.</span>\n\n';
+
+  let totalWeight = 0, totalRolls = 0;
+  const rw = rollWeight(roll);
+
+  result.forEach(([box, count], i) => {
+    const bw = count * rw + box.weight;
+    totalWeight += bw;
+    totalRolls += count;
+    const rep = ceil01(bw);
+    const idx = String(i+1).padStart(2,"0");
+    html += esc(idx + ". Коробка " + box.width + "x" + box.length + "x" + box.height +
+            " мм | рулонов: " + count + " | вес брутто: " + rep.toFixed(1) + " кг") + "\n";
+  });
+
+  const totalRep = ceil01(totalWeight);
+  html += '\n<span class="mut">Итого коробок: ' + result.length +
+          '\nИтого рулонов: ' + totalRolls +
+          '\nОбщий вес партии: ' + totalRep.toFixed(1) + ' кг</span>\n';
+
+  out.innerHTML = html;
+}
+
+$("calc").addEventListener("click", calculate);
+$("clear").addEventListener("click", () => {
+  ["w","l","q"].forEach(id => $(id).value = "");
+  out.innerHTML = "";
+  hideError();
+  $("w").focus();
+});
+["w","l","q"].forEach(id => {
+  $(id).addEventListener("keydown", e => {
+    if (e.key === "Enter"){
+      e.preventDefault();
+      if (id === "q"){ $(id).blur(); calculate(); }
+      else $(id === "w" ? "l" : "q").focus();
+    }
+  });
+});
+
+/* service worker: офлайн-режим */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
