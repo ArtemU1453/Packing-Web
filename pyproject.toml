@@ -1,11 +1,14 @@
 [tool.black]
 line-length = 88
 target-version = ["py312"]
+extend-exclude = "gui.py"
 
 [tool.isort]
 profile = "black"
+skip = ["gui.py"]
 
 [tool.ruff]
+exclude = ["gui.py"]
 line-length = 88
 target-version = "py312"
 
