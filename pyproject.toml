@@ -1,0 +1,23 @@
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+extend-exclude = "gui.py"
+
+[tool.isort]
+profile = "black"
+skip = ["gui.py"]
+
+[tool.ruff]
+exclude = ["gui.py"]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+exclude = ["gui.py"]
+disable_error_code = ["misc"]
