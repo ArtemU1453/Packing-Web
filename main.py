@@ -1,7 +1,6 @@
-import tkinter as tk
-from gui import App
+"""Desktop application entry point."""
+
+from app.main import main
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
+    main()
