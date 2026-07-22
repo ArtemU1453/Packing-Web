@@ -30,12 +30,13 @@
 
 ### Changed files
 - `main.py` — reduced to application startup delegation only.
+- `gui.py` — converted from legacy Tkinter implementation to a thin PySide6 compatibility module.
 - `models.py` — added slots dataclasses, type hints, docstrings, and cached diameter lookup.
 - `packing_logic.py` — added type hints and an internal dataclass without changing calculation sequence.
 - `requirements.txt` — added PySide6, test, formatting, linting, and type-checking tools.
 
 ### Deleted files
-- `gui.py` — removed legacy Tkinter UI after migrating desktop UI to PySide6.
+- None.
 
 ### New dependencies
 - `PySide6` for the industrial desktop UI.
