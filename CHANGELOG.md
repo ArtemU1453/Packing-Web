@@ -33,6 +33,7 @@
 - `models.py` — added slots dataclasses, type hints, docstrings, and cached diameter lookup.
 - `packing_logic.py` — added type hints and an internal dataclass without changing calculation sequence.
 - `requirements.txt` — added PySide6, test, formatting, linting, and type-checking tools.
+- `README.md` — added the direct mobile browser/PWA link and home-screen installation instructions.
 
 ### Deleted files
 - None.
