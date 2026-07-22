@@ -209,7 +209,7 @@ input{font-family:inherit;}
 .btn{
   height:60px; border-radius:var(--r-btn);
   display:flex; align-items:center; justify-content:center; gap:var(--s-8);
-  font-size:16px; font-weight:600; letter-spacing:-.01em;
+  font-size:16px; font-weight:600; letter-spacing:-.01em; line-height:1.15;
   transition:transform var(--dur) var(--ease), filter var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
 .btn:active{transform:scale(.98);}
@@ -246,15 +246,15 @@ input{font-family:inherit;}
 }
 .stat:nth-child(2){animation-delay:60ms;}
 .stat:nth-child(3){animation-delay:120ms;}
-.stat .semoji{font-size:24px; line-height:1;}
+.stat .sico{line-height:0; display:block;}
 .stat .snum{font-size:32px; font-weight:800; letter-spacing:-.03em; line-height:1;}
 .stat .slabel{font-size:13px; color:var(--text-2); font-weight:500;}
 .stat.blue{background:linear-gradient(180deg,var(--blue-tint),transparent); border-color:rgba(74,132,255,.28);}
-.stat.blue .snum{color:#9CBEFF;}
+.stat.blue .snum{color:#9CBEFF;} .stat.blue .sico{color:var(--blue);}
 .stat.green{background:linear-gradient(180deg,var(--green-tint),transparent); border-color:rgba(54,214,122,.28);}
-.stat.green .snum{color:#8DEDB6;}
+.stat.green .snum{color:#8DEDB6;} .stat.green .sico{color:var(--green);}
 .stat.purple{background:linear-gradient(180deg,var(--purple-tint),transparent); border-color:rgba(140,82,255,.28);}
-.stat.purple .snum{color:#C3A5FF;}
+.stat.purple .snum{color:#C3A5FF;} .stat.purple .sico{color:var(--purple);}
 
 .success-panel{
   margin-top:var(--s-16);
@@ -1038,10 +1038,16 @@ let lastParams = null;
 
 /* ---- Summary rendering ---- */
 function renderSummary(boxesCount, totalRolls, totalWeight){
+  const icoBox =
+    '<span class="sico" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>';
+  const icoRoll =
+    '<span class="sico" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="8" cy="12" rx="4" ry="6"/><path d="M8 6h8a4 6 0 0 1 0 12H8"/><ellipse cx="16" cy="12" rx="1.7" ry="2.6"/></svg></span>';
+  const icoWeight =
+    '<span class="sico" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10l2.5 11a1 1 0 0 1-1 1.2H5.5a1 1 0 0 1-1-1.2z"/><circle cx="12" cy="6" r="2.4"/><text x="12" y="17" font-size="6.5" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">KG</text></svg></span>';
   $("summaryGrid").innerHTML =
-    '<div class="stat blue"><span class="semoji">📦</span><span class="snum">' + boxesCount + '</span><span class="slabel">коробок</span></div>' +
-    '<div class="stat green"><span class="semoji">🧻</span><span class="snum">' + totalRolls + '</span><span class="slabel">рулонов</span></div>' +
-    '<div class="stat purple"><span class="semoji">⚖️</span><span class="snum">' + totalWeight.toFixed(1) + '</span><span class="slabel">кг общий вес</span></div>';
+    '<div class="stat blue">' + icoBox + '<span class="snum">' + boxesCount + '</span><span class="slabel">коробок</span></div>' +
+    '<div class="stat green">' + icoRoll + '<span class="snum">' + totalRolls + '</span><span class="slabel">рулонов</span></div>' +
+    '<div class="stat purple">' + icoWeight + '<span class="snum">' + totalWeight.toFixed(1) + '</span><span class="slabel">кг общий вес</span></div>';
 }
 
 /* ---- Laying scheme (top view of one layer) using existing geometry ---- */
