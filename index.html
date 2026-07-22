@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Расчет упаковки</title>
-<meta name="theme-color" content="#050B1A">
+<meta name="theme-color" content="#07111F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,166 +12,786 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* ==================================================================
+   DESIGN TOKENS — Premium Industrial · Dark UI
+   ================================================================== */
 :root{
-  --bg:#050B1A; --bg2:#0B1A32;
-  --panel:#0C1629; --panel-alt:#11233E; --deep:#091225;
-  --text:#D7E7FF; --muted:#7B91B7; --metal:#C6D8F6;
-  --gold:#F1C65A; --gold-a:#FFD775;
-  --green:#68C96B; --green-a:#7DDA80;
-  --cyan:#3CB8D9;
-  --line:#2B4E78; --line-soft:#1A3457;
-  --entry:#13233B; --out-bg:#0B1324; --out-text:#D0DEFA;
+  /* Surfaces */
+  --bg:#07111F;
+  --card:#101B31;
+  --inner:#16243C;
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+
+  /* Accents */
+  --green:#36D67A;
+  --green-2:#28B968;
+  --blue:#4A84FF;
+  --purple:#8C52FF;
+
+  /* Text */
+  --text:#F5F7FA;
+  --text-2:#93A4C0;
+
+  /* Status */
+  --success:#1D5B44;
+
+  /* Tints */
+  --green-tint:rgba(54,214,122,.12);
+  --blue-tint:rgba(74,132,255,.12);
+  --purple-tint:rgba(140,82,255,.12);
+  --danger:#FF5C6C;
+  --danger-tint:rgba(255,92,108,.12);
+
+  /* Spacing scale — 4/8/12/16/20/24/32/40 */
+  --s-4:4px; --s-8:8px; --s-12:12px; --s-16:16px;
+  --s-20:20px; --s-24:24px; --s-32:32px; --s-40:40px;
+
+  /* Radii */
+  --r-field:16px; --r-card:22px; --r-btn:16px; --r-pill:999px;
+
+  /* Motion */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --dur:220ms;
+
+  /* Bottom nav height incl. safe area */
+  --nav-h:84px;
+
+  --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
 }
+
+/* Light theme (Settings → Светлая тема) */
+:root[data-theme="light"]{
+  --bg:#EEF2F8;
+  --card:#FFFFFF;
+  --inner:#F2F5FB;
+  --border:rgba(9,20,40,0.08);
+  --border-strong:rgba(9,20,40,0.14);
+  --text:#0C1730;
+  --text-2:#5B6B85;
+  --green-tint:rgba(40,185,104,.12);
+  --blue-tint:rgba(74,132,255,.10);
+  --purple-tint:rgba(140,82,255,.10);
+}
+
 *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
 html{height:100%;}
 body{
   min-height:100%;
-  font-family:"Bahnschrift","Arial Narrow",-apple-system,"Segoe UI",Roboto,sans-serif;
-  background:linear-gradient(180deg,#020814 0%,#0B1A32 100%) fixed;
+  font-family:var(--font);
+  background:var(--bg);
   color:var(--text);
-  padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 16px);
+  font-size:17px;
+  line-height:1.4;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  transition:background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 body::before{
-  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background-image:radial-gradient(#17355C 1px, transparent 1px);
-  background-size:17px 10px; opacity:.5;
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(74,132,255,.10), transparent 60%),
+    radial-gradient(90% 50% at 90% 0%, rgba(54,214,122,.06), transparent 55%);
 }
-.wrap{position:relative; z-index:1; max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:12px;}
+:root[data-theme="light"] body::before{opacity:.5;}
 
-header{
-  background:linear-gradient(135deg,var(--panel-alt),#0B1830 72%);
-  border:1px solid var(--line);
-  border-top:2px solid #2B5D92;
-  padding:16px;
-  box-shadow:0 18px 45px rgba(0,0,0,.24);
-}
-h1{
-  color:var(--metal); font-size:19px; font-weight:700;
-  letter-spacing:.08em; text-transform:uppercase;
-}
-.sub{
-  color:var(--muted); font-family:ui-monospace,Consolas,Menlo,monospace;
-  font-size:11px; margin-top:4px;
-}
+img,svg{display:block; max-width:100%;}
+button{font-family:inherit; cursor:pointer; border:0; background:none; color:inherit;}
+input{font-family:inherit;}
 
-.panel{
-  background:linear-gradient(180deg,var(--panel),#0A1428);
-  border:1px solid var(--line-soft);
-  padding:16px;
-  box-shadow:0 14px 36px rgba(0,0,0,.18);
+/* ==================================================================
+   LAYOUT
+   ================================================================== */
+.app{
+  position:relative; z-index:1;
+  max-width:460px; margin:0 auto;
+  padding:calc(env(safe-area-inset-top) + var(--s-16)) var(--s-16)
+          calc(var(--nav-h) + var(--s-24));
 }
-.panel h2{
-  color:var(--metal); font-size:15px; font-weight:700; margin-bottom:14px;
-  letter-spacing:.03em;
-}
-label{
-  display:block; font-size:13px; color:var(--text); margin-bottom:5px;
-}
-input{
-  width:100%;
-  background:var(--entry);
-  border:1px solid var(--line);
-  color:var(--metal);
-  font-family:ui-monospace,Consolas,Menlo,monospace;
-  font-size:16px;
-  padding:12px;
-  margin-bottom:14px;
-  border-radius:0;
-  outline:none;
-  appearance:none;
-}
-input:focus{border-color:var(--cyan); box-shadow:0 0 0 2px rgba(60,184,217,.16);}
-input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.screen{display:flex; flex-direction:column; gap:var(--s-16); animation:fade var(--dur) var(--ease);}
+.screen[hidden]{display:none;}
 
-.btns{display:flex; gap:10px; margin-top:4px; flex-wrap:wrap;}
-button{
-  border:1px solid var(--line);
-  font-family:inherit; font-weight:700; font-size:14px;
-  padding:13px 14px; cursor:pointer; border-radius:0;
-  letter-spacing:.02em;
-  touch-action:manipulation;
+/* ==================================================================
+   CARD PRIMITIVE
+   ================================================================== */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r-card);
+  padding:var(--s-20);
+  box-shadow:0 20px 50px -30px rgba(0,0,0,.9);
 }
-#calc{flex:1; background:var(--green); color:#04111F;}
-#calc:active{background:var(--green-a);}
-#clear{background:var(--gold); color:#1A1D24;}
-#clear:active{background:var(--gold-a);}
-#demo{background:var(--panel-alt); color:var(--metal);}
-#demo:active{background:#183057;}
+.card-head{display:flex; align-items:center; gap:var(--s-12); margin-bottom:var(--s-20);}
+.card-head .head-icon{
+  width:34px; height:34px; flex:none;
+  display:grid; place-items:center;
+  border-radius:12px; background:var(--inner);
+  color:var(--green);
+}
+.card-head h2{font-size:24px; font-weight:700; letter-spacing:-.02em;}
+.card-head .head-icon.i-blue{color:var(--blue);}
 
-.err{
-  display:none;
-  margin-top:12px; padding:10px 12px;
-  border:1px solid #8A3B3B; background:#2A1220;
-  color:#F0A9A9;
-  font-family:ui-monospace,Consolas,Menlo,monospace; font-size:12px;
+/* ==================================================================
+   HEADER
+   ================================================================== */
+.app-header{display:flex; align-items:center; gap:var(--s-16); padding:var(--s-20);}
+.brand{display:flex; align-items:center; gap:var(--s-16); flex:1; min-width:0;}
+.brand-icon{
+  width:64px; height:64px; flex:none;
+  border-radius:18px;
+  background:linear-gradient(150deg, rgba(54,214,122,.28), rgba(54,214,122,.06));
+  border:1px solid rgba(54,214,122,.35);
+  display:grid; place-items:center;
+  color:var(--green);
+  box-shadow:0 0 0 1px rgba(54,214,122,.12), 0 12px 30px -10px rgba(54,214,122,.55);
 }
-.err.show{display:block;}
+.brand-text{min-width:0; flex:1;}
+.brand-text h1{font-size:27px; font-weight:800; letter-spacing:-.03em; line-height:1.08;}
+.brand-text .subtitle{color:var(--text-2); font-size:14px; margin-top:var(--s-4); line-height:1.3;}
+.pdf-btn{
+  width:60px; height:60px; flex:none;
+  border-radius:16px;
+  background:var(--inner);
+  border:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  color:var(--text-2);
+  transition:transform var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.pdf-btn span{font-size:11px; font-weight:600; letter-spacing:.02em;}
+.pdf-btn:hover{background:#1a2b47; color:var(--text);}
+.pdf-btn:active{transform:scale(.94);}
 
-.out{
-  background:var(--out-bg);
-  border:1px solid var(--line);
-  color:var(--out-text);
-  font-family:ui-monospace,Consolas,Menlo,monospace;
-  font-size:12.5px;
-  line-height:1.55;
-  padding:12px;
-  min-height:160px;
-  white-space:pre-wrap;
-  word-break:break-word;
+/* ==================================================================
+   INPUT FIELDS
+   ================================================================== */
+.fields{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s-12);}
+@media (max-width:440px){ .fields{grid-template-columns:1fr;} }
+
+.field{
+  height:74px;
+  border-radius:var(--r-field);
+  background:var(--inner);
+  border:1px solid var(--border);
+  padding:var(--s-12) var(--s-12) var(--s-8);
+  display:flex; flex-direction:column; justify-content:space-between;
+  transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:10px;}
-.stat{border:1px solid var(--line-soft); background:#0A1830; padding:10px;}
-.stat b{display:block; color:var(--gold); font-size:16px;}
-.stat span{color:var(--muted); font-size:10.5px;}
-.tip{margin-top:10px; color:var(--muted); font-size:11px; line-height:1.45; font-family:ui-monospace,Consolas,Menlo,monospace;}
-@media (max-width:520px){.stats{grid-template-columns:1fr;} button{width:100%;}}
-.out .hdr{color:var(--gold); font-weight:700;}
-.out .mut{color:var(--muted);}
-.out:empty::before{
-  content:"Введите параметры и нажмите «Рассчитать упаковку». Здесь появится отчет по коробкам и весу партии.";
-  color:var(--muted);
+.field:hover{border-color:var(--border-strong);}
+.field:focus-within{
+  border-color:var(--green);
+  box-shadow:0 0 0 3px var(--green-tint);
 }
-.foot{
-  color:var(--muted); font-size:10.5px; text-align:center;
-  font-family:ui-monospace,Consolas,Menlo,monospace;
+.field.error{
+  border-color:var(--danger);
+  box-shadow:0 0 0 3px var(--danger-tint);
+  animation:shake .28s var(--ease);
 }
+.field .flabel{font-size:13px; color:var(--text-2); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.field .frow{display:flex; align-items:center; gap:var(--s-8);}
+.field .ficon{color:var(--green); flex:none; display:grid; place-items:center;}
+.field input{
+  width:100%; min-width:0;
+  background:none; border:0; outline:0;
+  color:var(--text);
+  font-size:22px; font-weight:700; letter-spacing:-.01em;
+}
+.field input::placeholder{color:var(--text-2); opacity:.5; font-weight:600;}
+.field input:disabled{opacity:.4;}
+
+/* ==================================================================
+   ACTION BUTTONS
+   ================================================================== */
+.actions{display:flex; gap:var(--s-12); margin-top:var(--s-20);}
+.btn{
+  height:60px; border-radius:var(--r-btn);
+  display:flex; align-items:center; justify-content:center; gap:var(--s-8);
+  font-size:16px; font-weight:600; letter-spacing:-.01em;
+  transition:transform var(--dur) var(--ease), filter var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.btn:active{transform:scale(.98);}
+.btn-calc{
+  flex:0 0 60%;
+  background:linear-gradient(135deg, var(--green), var(--green-2));
+  color:#05231A; font-weight:700;
+  box-shadow:0 14px 28px -12px rgba(54,214,122,.75);
+}
+.btn-calc:hover{filter:brightness(1.06);}
+.btn-calc:disabled{opacity:.6; pointer-events:none;}
+.btn-clear{
+  flex:1 1 40%;
+  background:var(--inner);
+  border:1px solid var(--border);
+  color:var(--text);
+}
+.btn-clear:hover{background:#1a2b47;}
+.btn .spinner{width:20px; height:20px;}
+
+/* ==================================================================
+   RESULTS SUMMARY
+   ================================================================== */
+.summary-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s-12);}
+@media (max-width:360px){ .summary-grid{grid-template-columns:1fr;} }
+.stat{
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:var(--inner);
+  padding:var(--s-16) var(--s-12);
+  min-height:124px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  animation:pop var(--dur) var(--ease) backwards;
+}
+.stat:nth-child(2){animation-delay:60ms;}
+.stat:nth-child(3){animation-delay:120ms;}
+.stat .semoji{font-size:24px; line-height:1;}
+.stat .snum{font-size:32px; font-weight:800; letter-spacing:-.03em; line-height:1;}
+.stat .slabel{font-size:13px; color:var(--text-2); font-weight:500;}
+.stat.blue{background:linear-gradient(180deg,var(--blue-tint),transparent); border-color:rgba(74,132,255,.28);}
+.stat.blue .snum{color:#9CBEFF;}
+.stat.green{background:linear-gradient(180deg,var(--green-tint),transparent); border-color:rgba(54,214,122,.28);}
+.stat.green .snum{color:#8DEDB6;}
+.stat.purple{background:linear-gradient(180deg,var(--purple-tint),transparent); border-color:rgba(140,82,255,.28);}
+.stat.purple .snum{color:#C3A5FF;}
+
+.success-panel{
+  margin-top:var(--s-16);
+  display:flex; align-items:center; gap:var(--s-12);
+  padding:var(--s-16);
+  border-radius:16px;
+  background:linear-gradient(120deg, rgba(29,91,68,.55), rgba(54,214,122,.10));
+  border:1px solid rgba(54,214,122,.30);
+  animation:pop var(--dur) var(--ease) backwards; animation-delay:160ms;
+}
+.success-panel .check{
+  width:40px; height:40px; flex:none; border-radius:var(--r-pill);
+  display:grid; place-items:center;
+  background:rgba(54,214,122,.16); color:var(--green);
+}
+.success-panel .check svg{stroke-dasharray:24; stroke-dashoffset:24; animation:draw .5s var(--ease) forwards .18s;}
+.success-panel .stitle{color:var(--green); font-weight:700; font-size:16px;}
+.success-panel .ssub{color:var(--text-2); font-size:13px;}
+.success-panel .schev{margin-left:auto; color:var(--text-2); flex:none;}
+
+/* ==================================================================
+   BOX PACKING LIST
+   ================================================================== */
+.boxes-head{display:flex; align-items:center; gap:var(--s-12); margin-bottom:var(--s-20);}
+.boxes-head h2{font-size:24px; font-weight:700; letter-spacing:-.02em; flex:1;}
+.detail-toggle{display:flex; align-items:center; gap:var(--s-8); font-size:14px; color:var(--text-2);}
+.switch{position:relative; width:46px; height:28px; flex:none;}
+.switch input{position:absolute; opacity:0; width:100%; height:100%; margin:0; cursor:pointer;}
+.switch .track{
+  position:absolute; inset:0; border-radius:var(--r-pill);
+  background:var(--inner); border:1px solid var(--border);
+  transition:background var(--dur) var(--ease);
+}
+.switch .thumb{
+  position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+  background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.4);
+  transition:transform var(--dur) var(--ease);
+}
+.switch input:checked ~ .track{background:var(--green);}
+.switch input:checked ~ .thumb{transform:translateX(18px);}
+
+.box-list{display:flex; flex-direction:column; gap:var(--s-12);}
+.box-item{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--inner);
+  overflow:hidden;
+  animation:slide var(--dur) var(--ease) backwards;
+}
+.box-row{
+  width:100%; display:flex; align-items:center; gap:var(--s-12);
+  padding:var(--s-12) var(--s-16);
+  text-align:left;
+}
+.box-row .box-glyph svg{width:28px; height:28px;}
+.box-num{
+  width:44px; height:44px; flex:none; border-radius:12px;
+  display:grid; place-items:center;
+  font-size:18px; font-weight:700;
+  background:var(--green-tint); color:var(--green);
+  border:1px solid rgba(54,214,122,.30);
+}
+.box-item.last .box-num{background:var(--purple-tint); color:var(--purple); border-color:rgba(140,82,255,.30);}
+.box-info{flex:1; min-width:0; display:flex; flex-direction:column;}
+.box-title{font-size:15px; font-weight:600; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.box-meta{font-size:13px; color:var(--text-2); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.box-glyph{color:var(--blue); flex:none;}
+.box-item.last .box-glyph{color:var(--purple);}
+.chevron{color:var(--text-2); flex:none; transition:transform var(--dur) var(--ease);}
+.box-item.open .chevron{transform:rotate(180deg);}
+
+.box-details{
+  display:grid; grid-template-rows:0fr;
+  transition:grid-template-rows var(--dur) var(--ease);
+}
+.box-item.open .box-details{grid-template-rows:1fr;}
+.box-details > .inner{overflow:hidden;}
+.bd-pad{padding:0 var(--s-16) var(--s-16); border-top:1px solid var(--border); margin-top:2px;}
+.bd-grid{display:grid; grid-template-columns:1fr 1fr; gap:var(--s-8) var(--s-16); padding-top:var(--s-16);}
+.bd-item{display:flex; justify-content:space-between; gap:var(--s-8); font-size:14px;}
+.bd-item .k{color:var(--text-2);}
+.bd-item .v{font-weight:600;}
+.bd-scheme-wrap{margin-top:var(--s-16);}
+.bd-scheme-title{font-size:13px; color:var(--text-2); margin-bottom:var(--s-8);}
+.bd-scheme{
+  display:inline-grid; gap:5px; padding:var(--s-12);
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+}
+.bd-scheme .roll{width:16px; height:16px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #6f8dff, #2d4fb8);}
+.box-item.last .bd-scheme .roll{background:radial-gradient(circle at 35% 30%, #b48cff, #6a35d6);}
+.bd-more{
+  margin-top:var(--s-16); width:100%; height:44px; border-radius:12px;
+  background:var(--card); border:1px solid var(--border);
+  color:var(--text); font-weight:600; font-size:14px;
+  display:flex; align-items:center; justify-content:center; gap:var(--s-8);
+  transition:transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.bd-more:hover{background:#1a2b47;}
+.bd-more:active{transform:scale(.98);}
+
+/* ==================================================================
+   GENERIC LIST CARDS (History / Boxes screens)
+   ================================================================== */
+.empty{
+  text-align:center; color:var(--text-2); font-size:15px;
+  padding:var(--s-40) var(--s-16);
+}
+.empty .eicon{font-size:34px; margin-bottom:var(--s-12); opacity:.6;}
+
+.list-card{
+  border:1px solid var(--border); border-radius:16px; background:var(--inner);
+  padding:var(--s-16);
+  display:flex; flex-direction:column; gap:var(--s-12);
+  animation:slide var(--dur) var(--ease) backwards;
+}
+.lc-top{display:flex; align-items:center; justify-content:space-between; gap:var(--s-12);}
+.lc-date{font-size:13px; color:var(--text-2);}
+.lc-badge{
+  font-size:12px; font-weight:600; padding:4px 10px; border-radius:var(--r-pill);
+  background:var(--green-tint); color:var(--green);
+}
+.lc-params{font-size:16px; font-weight:600;}
+.lc-stats{display:flex; gap:var(--s-16); font-size:14px; color:var(--text-2);}
+.lc-stats b{color:var(--text);}
+.lc-actions{display:flex; gap:var(--s-8);}
+.mini-btn{
+  height:42px; padding:0 var(--s-16); border-radius:12px;
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--s-8);
+  font-size:14px; font-weight:600;
+  background:var(--card); border:1px solid var(--border); color:var(--text);
+  transition:transform var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.mini-btn:active{transform:scale(.97);}
+.mini-btn.accent{background:linear-gradient(135deg,var(--green),var(--green-2)); color:#05231A; border-color:transparent;}
+.mini-btn.danger{color:var(--danger);}
+.mini-btn.flex{flex:1;}
+
+.box-cat{
+  border:1px solid var(--border); border-radius:16px; background:var(--inner);
+  padding:var(--s-16); display:flex; align-items:center; gap:var(--s-16);
+  animation:slide var(--dur) var(--ease) backwards;
+}
+.box-cat .cat-glyph{
+  width:48px; height:48px; flex:none; border-radius:12px; display:grid; place-items:center;
+  background:var(--blue-tint); color:var(--blue);
+}
+.box-cat .cat-info{flex:1; min-width:0;}
+.box-cat .cat-size{font-size:16px; font-weight:700; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.box-cat .cat-meta{font-size:13px; color:var(--text-2); margin-top:2px;}
+.box-cat .cat-actions{display:flex; gap:var(--s-8);}
+.icon-btn{
+  width:38px; height:38px; flex:none; border-radius:10px; display:grid; place-items:center;
+  background:var(--card); border:1px solid var(--border); color:var(--text-2);
+  transition:transform var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.icon-btn:hover{color:var(--text); background:#1a2b47;}
+.icon-btn:active{transform:scale(.92);}
+.icon-btn.danger:hover{color:var(--danger);}
+.add-btn{
+  width:100%; height:56px; border-radius:16px;
+  display:flex; align-items:center; justify-content:center; gap:var(--s-8);
+  font-size:16px; font-weight:700;
+  background:linear-gradient(135deg,var(--green),var(--green-2)); color:#05231A;
+  box-shadow:0 14px 28px -14px rgba(54,214,122,.7);
+  transition:transform var(--dur) var(--ease), filter var(--dur) var(--ease);
+}
+.add-btn:hover{filter:brightness(1.06);}
+.add-btn:active{transform:scale(.98);}
+
+/* Settings */
+.set-group{display:flex; flex-direction:column; gap:2px;}
+.set-row{
+  display:flex; align-items:center; gap:var(--s-12);
+  padding:var(--s-16); background:var(--inner);
+  border:1px solid var(--border);
+}
+.set-row:first-child{border-radius:16px 16px 0 0;}
+.set-row:last-child{border-radius:0 0 16px 16px;}
+.set-row:only-child{border-radius:16px;}
+.set-row + .set-row{border-top:0;}
+.set-ico{width:34px; height:34px; flex:none; border-radius:10px; display:grid; place-items:center; background:var(--card); color:var(--green);}
+.set-label{flex:1; font-size:16px; font-weight:500;}
+.set-sub{display:block; font-size:13px; color:var(--text-2); font-weight:400; margin-top:1px;}
+.set-row .chev{color:var(--text-2);}
+.set-row.tappable{cursor:pointer; transition:background var(--dur) var(--ease);}
+.set-row.tappable:active{background:#1a2b47;}
+.set-ver{color:var(--text-2); font-size:15px;}
+
+/* ==================================================================
+   BOTTOM NAVIGATION
+   ================================================================== */
+.bottom-nav{
+  position:fixed; left:0; right:0; bottom:0; z-index:20;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgba(22,36,60,.82);
+  backdrop-filter:saturate(160%) blur(18px);
+  -webkit-backdrop-filter:saturate(160%) blur(18px);
+  border-top:1px solid var(--border);
+  display:flex; align-items:stretch;
+}
+.nav-tab{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--s-4);
+  color:var(--text-2); font-size:12px; font-weight:500;
+  transition:color var(--dur) var(--ease);
+  padding-top:var(--s-8);
+}
+.nav-tab .ni{transition:transform var(--dur) var(--ease);}
+.nav-tab.active{color:var(--green);}
+.nav-tab:active .ni{transform:translateY(-2px) scale(1.08);}
+
+/* ==================================================================
+   TOAST
+   ================================================================== */
+.toast-wrap{
+  position:fixed; left:0; right:0; bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--s-16));
+  z-index:40; display:flex; flex-direction:column; align-items:center; gap:var(--s-8);
+  pointer-events:none; padding:0 var(--s-16);
+}
+.toast{
+  max-width:420px; width:100%;
+  display:flex; align-items:center; gap:var(--s-12);
+  padding:var(--s-12) var(--s-16); border-radius:14px;
+  background:var(--card); border:1px solid var(--border);
+  color:var(--text); font-size:14px; font-weight:500;
+  box-shadow:0 18px 40px -16px rgba(0,0,0,.8);
+  animation:toastIn var(--dur) var(--ease);
+}
+.toast.err{border-color:rgba(255,92,108,.4);}
+.toast.err .ti{color:var(--danger);}
+.toast.ok .ti{color:var(--green);}
+.toast .ti{flex:none;}
+.toast.hide{animation:toastOut var(--dur) var(--ease) forwards;}
+
+/* ==================================================================
+   ANIMATIONS
+   ================================================================== */
+@keyframes fade{from{opacity:0;} to{opacity:1;}}
+@keyframes pop{from{opacity:0; transform:scale(.96) translateY(6px);} to{opacity:1; transform:none;}}
+@keyframes slide{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+@keyframes shake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
+@keyframes draw{to{stroke-dashoffset:0;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes toastIn{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:none;}}
+@keyframes toastOut{to{opacity:0; transform:translateY(12px);}}
+.spin{animation:spin .7s linear infinite;}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms !important; transition-duration:.001ms !important;}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Расчет упаковки</h1>
-    <div class="sub">Ввод параметров и отчет по упаковке готовых рулонов</div>
-  </header>
+<main class="app">
 
-  <section class="panel">
-    <h2>Параметры</h2>
-    <label for="w">Ширина рулона (мм)</label>
-    <input id="w" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="например 55">
-    <label for="l">Намотка (м)</label>
-    <input id="l" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="300, 450 или 600">
-    <label for="q">Количество</label>
-    <input id="q" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="например 128">
-    <div class="btns">
-      <button id="calc">Рассчитать упаковку</button>
-      <button id="demo" type="button">Пример</button>
-      <button id="clear">Очистить</button>
+  <!-- ============================ CALC SCREEN ============================ -->
+  <section class="screen" id="screen-calc">
+    <header class="card app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8V16a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8"/>
+            <path d="M3.3 7l8.7 5 8.7-5M12 22V12"/>
+            <path d="M12 2 3 7l9 5 9-5-9-5z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Расчет упаковки</h1>
+          <p class="subtitle">Ввод параметров и расчет готовых рулонов</p>
+        </div>
+      </div>
+      <button class="pdf-btn" id="pdfBtn" type="button" aria-label="Экспорт PDF">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <path d="M14 2v6h6"/>
+        </svg>
+        <span>PDF</span>
+      </button>
+    </header>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="head-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="6" x2="14" y2="6"/><line x1="18" y1="6" x2="20" y2="6"/><circle cx="16" cy="6" r="2"/>
+            <line x1="4" y1="12" x2="8" y2="12"/><line x1="12" y1="12" x2="20" y2="12"/><circle cx="10" cy="12" r="2"/>
+            <line x1="4" y1="18" x2="14" y2="18"/><line x1="18" y1="18" x2="20" y2="18"/><circle cx="16" cy="18" r="2"/>
+          </svg>
+        </span>
+        <h2>Параметры расчета</h2>
+      </div>
+
+      <div class="fields">
+        <label class="field" id="field-w">
+          <span class="flabel">Ширина рулона (мм)</span>
+          <span class="frow">
+            <span class="ficon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="6" width="12" height="12" rx="2"/><path d="M4 4v16M20 4v16"/>
+              </svg>
+            </span>
+            <input id="w" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="0">
+          </span>
+        </label>
+
+        <label class="field" id="field-l">
+          <span class="flabel">Намотка (м)</span>
+          <span class="frow">
+            <span class="ficon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="8" cy="12" rx="4" ry="6"/><path d="M8 6h8a4 6 0 0 1 0 12H8"/><ellipse cx="16" cy="12" rx="1.6" ry="2.4"/>
+              </svg>
+            </span>
+            <input id="l" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="0">
+          </span>
+        </label>
+
+        <label class="field" id="field-q">
+          <span class="flabel">Количество (шт.)</span>
+          <span class="frow">
+            <span class="ficon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 12l9 5 9-5M3 16l9 5 9-5"/>
+              </svg>
+            </span>
+            <input id="q" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="0">
+          </span>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-calc" id="calc" type="button">
+          <span class="btn-ic" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/>
+              <line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/>
+              <line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="18"/>
+              <line x1="8" y1="18" x2="12" y2="18"/>
+            </svg>
+          </span>
+          <span class="btn-tx">Рассчитать упаковку</span>
+        </button>
+        <button class="btn btn-clear" id="clear" type="button">
+          <span aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+              <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+          </span>
+          <span>Очистить</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="card" id="resultsCard" hidden>
+      <div class="card-head">
+        <span class="head-icon i-blue" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M12 3v9h9A9 9 0 0 0 12 3z"/>
+          </svg>
+        </span>
+        <h2>Сводка результатов</h2>
+      </div>
+      <div class="summary-grid" id="summaryGrid"></div>
+      <div class="success-panel">
+        <span class="check" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l5 5L20 6"/>
+          </svg>
+        </span>
+        <div>
+          <div class="stitle">Расчет выполнен успешно</div>
+          <div class="ssub">Готовая упаковка оптимизирована</div>
+        </div>
+        <span class="schev" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </div>
+    </section>
+
+    <section class="card" id="boxesCard" hidden>
+      <div class="boxes-head">
+        <span class="head-icon i-blue" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>
+          </svg>
+        </span>
+        <h2>Упаковка по коробкам</h2>
+        <label class="detail-toggle">
+          <span class="switch">
+            <input type="checkbox" id="detailsToggle">
+            <span class="track"></span><span class="thumb"></span>
+          </span>
+          <span>Показать детали</span>
+        </label>
+      </div>
+      <div class="box-list" id="boxList"></div>
+    </section>
+  </section>
+
+  <!-- ============================ HISTORY SCREEN ============================ -->
+  <section class="screen" id="screen-history" hidden>
+    <header class="card app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true" style="background:linear-gradient(150deg,rgba(74,132,255,.28),rgba(74,132,255,.06));border-color:rgba(74,132,255,.35);color:var(--blue);box-shadow:0 0 0 1px rgba(74,132,255,.12),0 12px 30px -10px rgba(74,132,255,.55)">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </div>
+        <div class="brand-text">
+          <h1>История</h1>
+          <p class="subtitle">Последние расчеты упаковки</p>
+        </div>
+      </div>
+    </header>
+    <div id="historyList"></div>
+  </section>
+
+  <!-- ============================ BOXES SCREEN ============================ -->
+  <section class="screen" id="screen-boxes" hidden>
+    <header class="card app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
+        </div>
+        <div class="brand-text">
+          <h1>Коробки</h1>
+          <p class="subtitle">Каталог доступных коробок</p>
+        </div>
+      </div>
+    </header>
+    <div class="card">
+      <div id="catalogList" style="display:flex;flex-direction:column;gap:var(--s-12);margin-bottom:var(--s-16)"></div>
+      <button class="add-btn" id="addBoxBtn" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Добавить новую
+      </button>
     </div>
-    <div class="err" id="err"></div>
-    <div class="tip">Поддерживается ввод с точкой или запятой. Enter переводит фокус к следующему полю, а в поле количества запускает расчет.</div>
   </section>
 
-  <section class="panel">
-    <h2>Отчет по упаковке</h2>
-    <div class="out" id="out"></div>
+  <!-- ============================ SETTINGS SCREEN ============================ -->
+  <section class="screen" id="screen-settings" hidden>
+    <header class="card app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true" style="background:linear-gradient(150deg,rgba(140,82,255,.28),rgba(140,82,255,.06));border-color:rgba(140,82,255,.35);color:var(--purple);box-shadow:0 0 0 1px rgba(140,82,255,.12),0 12px 30px -10px rgba(140,82,255,.55)">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </div>
+        <div class="brand-text">
+          <h1>Настройки</h1>
+          <p class="subtitle">Оформление и данные</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="card-head"><span class="head-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </span><h2>Оформление</h2></div>
+      <div class="set-group">
+        <div class="set-row">
+          <span class="set-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+          <span class="set-label">Тёмная тема<span class="set-sub">Светлая / тёмная</span></span>
+          <label class="switch"><input type="checkbox" id="themeToggle" checked><span class="track"></span><span class="thumb"></span></label>
+        </div>
+        <div class="set-row tappable" id="langRow">
+          <span class="set-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span>
+          <span class="set-label">Язык<span class="set-sub" id="langValue">Русский</span></span>
+          <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="head-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+      </span><h2>Данные</h2></div>
+      <div class="set-group">
+        <div class="set-row tappable" id="exportPdf">
+          <span class="set-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+          <span class="set-label">Экспорт PDF</span>
+          <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        <div class="set-row tappable" id="exportExcel">
+          <span class="set-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg></span>
+          <span class="set-label">Экспорт Excel</span>
+          <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        <div class="set-row tappable" id="clearHistory">
+          <span class="set-ico" style="color:var(--danger)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></span>
+          <span class="set-label">Очистить историю</span>
+          <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="set-group">
+        <div class="set-row tappable" id="aboutRow">
+          <span class="set-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+          <span class="set-label">О приложении</span>
+          <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+        <div class="set-row">
+          <span class="set-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg></span>
+          <span class="set-label">Версия</span>
+          <span class="set-ver">2.0.0</span>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <div class="foot">MAX 21.0 кг / коробка · офлайн-версия</div>
-</div>
+</main>
+
+<!-- ============================ BOTTOM NAVIGATION ============================ -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-tab active" data-screen="calc" type="button">
+    <span class="ni" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></span>
+    <span>Расчет</span>
+  </button>
+  <button class="nav-tab" data-screen="history" type="button">
+    <span class="ni" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+    <span>История</span>
+  </button>
+  <button class="nav-tab" data-screen="boxes" type="button">
+    <span class="ni" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>
+    <span>Коробки</span>
+  </button>
+  <button class="nav-tab" data-screen="settings" type="button">
+    <span class="ni" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
+    <span>Настройки</span>
+  </button>
+</nav>
+
+<div class="toast-wrap" id="toastWrap"></div>
 
 <script>
 "use strict";
+/* ==================================================================
+   BUSINESS LOGIC — UNCHANGED (models.py + packing_logic.py port)
+   The algorithms, calculations and data models below are preserved
+   verbatim. Only the presentation layer around them was redesigned.
+   ================================================================== */
 /* ==== models.py ==== */
 const CORE_WEIGHT_100MM = 0.026;
 const MATERIAL_WEIGHT_M2 = 0.009;
@@ -378,40 +998,147 @@ function packRolls(roll, quantity){
   return boxesUsed;
 }
 
-/* ==== gui ==== */
+/* ==================================================================
+   PRESENTATION LAYER — redesigned UI (no business logic changes)
+   ================================================================== */
 const $ = id => document.getElementById(id);
-const err = $("err"), out = $("out");
-
-function showError(msg){ err.textContent = msg; err.classList.add("show"); }
-function hideError(){ err.classList.remove("show"); }
 
 function parseNum(s){
   s = s.trim().replace(",", ".");
   if (s === "" || !/^-?\d*\.?\d+$/.test(s)) return NaN;
   return parseFloat(s);
 }
+function ceil01(x){ return Math.ceil(x*10)/10; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-function ceil01(x){
-  return Math.ceil(x*10)/10;
+/* ---- Toast ---- */
+function toast(msg, type){
+  const wrap = $("toastWrap");
+  const el = document.createElement("div");
+  el.className = "toast " + (type || "");
+  const ic = type === "err"
+    ? '<span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></span>'
+    : '<span class="ti"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>';
+  el.innerHTML = ic + "<span>" + esc(msg) + "</span>";
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.classList.add("hide");
+    el.addEventListener("animationend", () => el.remove(), {once:true});
+  }, 2600);
 }
 
-function esc(s){
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+/* ---- Field error helpers ---- */
+function markError(ids){ ids.forEach(id => $("field-" + id).classList.add("error")); }
+function clearErrors(){ ["w","l","q"].forEach(id => $("field-" + id).classList.remove("error")); }
+
+/* ---- State ---- */
+let lastResult = null;   // [[box,count],...]
+let lastRoll = null;
+let lastParams = null;
+
+/* ---- Summary rendering ---- */
+function renderSummary(boxesCount, totalRolls, totalWeight){
+  $("summaryGrid").innerHTML =
+    '<div class="stat blue"><span class="semoji">📦</span><span class="snum">' + boxesCount + '</span><span class="slabel">коробок</span></div>' +
+    '<div class="stat green"><span class="semoji">🧻</span><span class="snum">' + totalRolls + '</span><span class="slabel">рулонов</span></div>' +
+    '<div class="stat purple"><span class="semoji">⚖️</span><span class="snum">' + totalWeight.toFixed(1) + '</span><span class="slabel">кг общий вес</span></div>';
 }
 
+/* ---- Laying scheme (top view of one layer) using existing geometry ---- */
+function schemeGrid(cols, rows){
+  const c = Math.max(1, Math.min(cols, 8));
+  const r = Math.max(1, Math.min(rows, 8));
+  let cells = "";
+  for (let i = 0; i < c * r; i++) cells += '<span class="roll"></span>';
+  return '<div class="bd-scheme" style="grid-template-columns:repeat(' + c + ',16px)">' + cells + '</div>';
+}
+
+/* ---- Box list rendering ---- */
+function renderBoxes(result, roll){
+  const rw = rollWeight(roll);
+  const d = rollDiameter(roll);
+  const last = result.length - 1;
+  const showAll = $("detailsToggle").checked;
+
+  const html = result.map(([box, count], i) => {
+    const net = count * rw;
+    const gross = ceil01(net + box.weight);
+    const cols = Math.floor(box.width / d);
+    const rows = Math.floor(box.length / d);
+    const layers = Math.floor(box.height / roll.width_mm);
+    const isLast = i === last;
+    const openCls = showAll ? " open" : "";
+
+    const boxGlyph =
+      '<span class="box-glyph" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>';
+    const chev =
+      '<span class="chevron" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>';
+
+    const details =
+      '<div class="box-details"><div class="inner"><div class="bd-pad">' +
+        '<div class="bd-grid">' +
+          '<div class="bd-item"><span class="k">Размер</span><span class="v">' + box.width + '×' + box.length + '×' + box.height + '</span></div>' +
+          '<div class="bd-item"><span class="k">Рулонов</span><span class="v">' + count + '</span></div>' +
+          '<div class="bd-item"><span class="k">Рядов</span><span class="v">' + rows + '</span></div>' +
+          '<div class="bd-item"><span class="k">Стопок</span><span class="v">' + cols + '</span></div>' +
+          '<div class="bd-item"><span class="k">Слоёв</span><span class="v">' + layers + '</span></div>' +
+          '<div class="bd-item"><span class="k">Вес нетто</span><span class="v">' + ceil01(net).toFixed(1) + ' кг</span></div>' +
+          '<div class="bd-item"><span class="k">Вес брутто</span><span class="v">' + gross.toFixed(1) + ' кг</span></div>' +
+        '</div>' +
+        '<div class="bd-scheme-wrap"><div class="bd-scheme-title">Схема укладки (вид сверху)</div>' + schemeGrid(cols, rows) + '</div>' +
+        '<button class="bd-more" type="button" data-more="' + i + '">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+          'Подробнее</button>' +
+      '</div></div></div>';
+
+    return '<div class="box-item' + (isLast ? ' last' : '') + openCls + '" style="animation-delay:' + (i * 40) + 'ms">' +
+        '<button class="box-row" type="button" data-toggle="' + i + '">' +
+          '<span class="box-num">' + (i + 1) + '</span>' +
+          '<span class="box-info">' +
+            '<span class="box-title">Коробка ' + box.width + '×' + box.length + '×' + box.height + ' мм</span>' +
+            '<span class="box-meta">' + count + ' ' + rollWord(count) + ' • Вес брутто: ' + gross.toFixed(1) + ' кг</span>' +
+          '</span>' + boxGlyph + chev +
+        '</button>' + details +
+      '</div>';
+  }).join("");
+
+  $("boxList").innerHTML = html;
+}
+
+function rollWord(n){
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return "рулон";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return "рулона";
+  return "рулонов";
+}
+
+/* ---- Main calculate flow (calculations preserved) ---- */
+let calculating = false;
 function calculate(){
-  hideError();
-  const width = parseNum($("w").value);
+  if (calculating) return;
+  clearErrors();
+
+  const width  = parseNum($("w").value);
   const length = parseNum($("l").value);
   const qtyRaw = parseNum($("q").value);
 
-  if (isNaN(width) || isNaN(length) || isNaN(qtyRaw) || !Number.isInteger(qtyRaw)){
-    showError("Введите числовые значения ширины, намотки и количества.");
+  const bad = [];
+  if (isNaN(width))  bad.push("w");
+  if (isNaN(length)) bad.push("l");
+  if (isNaN(qtyRaw) || !Number.isInteger(qtyRaw)) bad.push("q");
+  if (bad.length){
+    markError(bad);
+    toast("Введите числовые значения ширины, намотки и количества.", "err");
     return;
   }
   const qty = qtyRaw;
-  if (width <= 0 || length <= 0 || qty <= 0){
-    showError("Все значения должны быть больше нуля.");
+  const nonPos = [];
+  if (width <= 0)  nonPos.push("w");
+  if (length <= 0) nonPos.push("l");
+  if (qty <= 0)    nonPos.push("q");
+  if (nonPos.length){
+    markError(nonPos);
+    toast("Все значения должны быть больше нуля.", "err");
     return;
   }
 
@@ -421,62 +1148,290 @@ function calculate(){
     result = packRolls(roll, qty);
     if (!result.length) throw new Error("Модуль упаковки вернул пустой результат.");
   } catch(e){
-    showError(e.message);
+    toast(e.message, "err");
     return;
   }
 
-  let lines = [];
-  let totalWeight = 0, totalRolls = 0;
-  const rw = rollWeight(roll);
+  // Loader state
+  calculating = true;
+  const btn = $("calc");
+  btn.disabled = true;
+  const btnTx = btn.querySelector(".btn-tx");
+  const btnIc = btn.querySelector(".btn-ic");
+  const prevTx = btnTx.textContent;
+  btnIc.innerHTML = '<svg class="spin spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9" opacity=".9"/></svg>';
+  btnTx.textContent = "Расчет…";
 
-  result.forEach(([box, count], i) => {
-    const bw = count * rw + box.weight;
-    totalWeight += bw;
-    totalRolls += count;
-    const rep = ceil01(bw);
-    const idx = String(i+1).padStart(2,"0");
-    lines.push(esc(idx + ". Коробка " + box.width + "×" + box.length + "×" + box.height +
-            " мм | рулонов: " + count + " | вес брутто: " + rep.toFixed(1) + " кг"));
-  });
+  setTimeout(() => {
+    // Totals — identical math to the original report
+    let totalWeight = 0, totalRolls = 0;
+    const rw = rollWeight(roll);
+    result.forEach(([box, count]) => {
+      totalWeight += count * rw + box.weight;
+      totalRolls += count;
+    });
+    const totalRep = ceil01(totalWeight);
 
-  const totalRep = ceil01(totalWeight);
-  let html = '<div class="stats">' +
-    '<div class="stat"><b>' + result.length + '</b><span>коробок</span></div>' +
-    '<div class="stat"><b>' + totalRolls + '</b><span>рулонов</span></div>' +
-    '<div class="stat"><b>' + totalRep.toFixed(1) + ' кг</b><span>общий вес</span></div>' +
-    '</div>';
-  html += '<span class="hdr">СВОДКА УПАКОВКИ ГОТОВЫХ РУЛОНОВ</span>\n';
-  html += '<span class="mut">Параметры: ширина ' + width.toFixed(0) + ' мм, намотка ' +
-          length.toFixed(0) + ' м, количество ' + qty + ' шт.</span>\n\n';
-  html += lines.join("\n") + "\n";
+    lastResult = result;
+    lastRoll = roll;
+    lastParams = {width, length, qty, boxes: result.length, rolls: totalRolls, weight: totalRep};
 
-  out.innerHTML = html;
+    renderSummary(result.length, totalRolls, totalRep);
+    renderBoxes(result, roll);
+    $("resultsCard").hidden = false;
+    $("boxesCard").hidden = false;
+
+    saveHistory(lastParams);
+
+    // Restore button
+    btn.disabled = false;
+    calculating = false;
+    btnIc.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="18" x2="12" y2="18"/></svg>';
+    btnTx.textContent = prevTx;
+
+    // Auto-scroll to summary
+    requestAnimationFrame(() => {
+      $("resultsCard").scrollIntoView({behavior:"smooth", block:"start"});
+    });
+    toast("Расчет выполнен успешно", "ok");
+  }, 420);
 }
 
+/* ---- History (localStorage — additive, no logic impact) ---- */
+const HKEY = "packing_history_v1";
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e){ return []; }
+}
+function saveHistory(p){
+  const list = loadHistory();
+  list.unshift({t: Date.now(), w: p.width, l: p.length, q: p.qty, boxes: p.boxes, weight: p.weight});
+  localStorage.setItem(HKEY, JSON.stringify(list.slice(0, 30)));
+}
+function fmtDate(t){
+  const d = new Date(t);
+  const p = n => String(n).padStart(2,"0");
+  return p(d.getDate()) + "." + p(d.getMonth()+1) + "." + d.getFullYear() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function renderHistory(){
+  const list = loadHistory();
+  const box = $("historyList");
+  if (!list.length){
+    box.innerHTML = '<div class="card"><div class="empty"><div class="eicon">🕒</div>Пока нет расчетов.<br>Выполните первый расчет упаковки.</div></div>';
+    return;
+  }
+  box.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:var(--s-12)">' +
+    list.map((h, i) =>
+      '<div class="list-card" style="animation-delay:' + (i*40) + 'ms">' +
+        '<div class="lc-top"><span class="lc-date">' + fmtDate(h.t) + '</span><span class="lc-badge">' + h.boxes + ' ' + boxWord(h.boxes) + '</span></div>' +
+        '<div class="lc-params">Ширина ' + h.w + ' мм · Намотка ' + h.l + ' м · ' + h.q + ' шт.</div>' +
+        '<div class="lc-stats"><span>Коробок: <b>' + h.boxes + '</b></span><span>Вес: <b>' + Number(h.weight).toFixed(1) + ' кг</b></span></div>' +
+        '<div class="lc-actions"><button class="mini-btn accent flex" type="button" data-repeat="' + i + '">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>' +
+          'Повторить расчет</button></div>' +
+      '</div>'
+    ).join("") + '</div>';
+}
+function boxWord(n){
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return "коробка";
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return "коробки";
+  return "коробок";
+}
+
+/* ---- Boxes catalog (display of BOXES + local edits, does not feed packing) ---- */
+const CKEY = "packing_catalog_v1";
+function loadCatalog(){
+  try {
+    const saved = JSON.parse(localStorage.getItem(CKEY));
+    if (Array.isArray(saved) && saved.length) return saved;
+  } catch(e){}
+  return BOXES.map(([w,l,h,wt]) => ({w, l, h, wt}));
+}
+function saveCatalog(list){ localStorage.setItem(CKEY, JSON.stringify(list)); }
+function renderCatalog(){
+  const list = loadCatalog();
+  $("catalogList").innerHTML = list.map((b, i) => {
+    const cap = Math.floor((MAX_BOX_WEIGHT - b.wt) / 0.5); // индикативная вместимость по весу
+    return '<div class="box-cat" style="animation-delay:' + (i*40) + 'ms">' +
+      '<span class="cat-glyph" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>' +
+      '<div class="cat-info">' +
+        '<div class="cat-size">' + b.w + '×' + b.l + '×' + b.h + ' мм</div>' +
+        '<div class="cat-meta">Лимит: ' + MAX_BOX_WEIGHT.toFixed(1) + ' кг · Вес тары: ' + b.wt.toFixed(1) + ' кг</div>' +
+      '</div>' +
+      '<div class="cat-actions">' +
+        '<button class="icon-btn" type="button" data-edit="' + i + '" aria-label="Редактировать"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>' +
+        '<button class="icon-btn danger" type="button" data-del="' + i + '" aria-label="Удалить"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>' +
+      '</div></div>';
+  }).join("") || '<div class="empty"><div class="eicon">📦</div>Каталог пуст.</div>';
+}
+
+/* ---- Screen router ---- */
+function switchScreen(name){
+  ["calc","history","boxes","settings"].forEach(s => {
+    $("screen-" + s).hidden = (s !== name);
+  });
+  document.querySelectorAll(".nav-tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.screen === name);
+  });
+  if (name === "history") renderHistory();
+  if (name === "boxes") renderCatalog();
+  window.scrollTo({top:0, behavior:"instant" in window ? "instant" : "auto"});
+}
+
+/* ==================================================================
+   EVENT WIRING
+   ================================================================== */
 $("calc").addEventListener("click", calculate);
-$("demo").addEventListener("click", () => {
-  $("w").value = "55";
-  $("l").value = "450";
-  $("q").value = "128";
-  calculate();
-});
 $("clear").addEventListener("click", () => {
   ["w","l","q"].forEach(id => $(id).value = "");
-  out.innerHTML = "";
-  hideError();
+  clearErrors();
+  $("resultsCard").hidden = true;
+  $("boxesCard").hidden = true;
+  $("detailsToggle").checked = false;
+  lastResult = null;
   $("w").focus();
 });
+
 ["w","l","q"].forEach(id => {
-  $(id).addEventListener("keydown", e => {
+  const el = $(id);
+  el.addEventListener("input", () => $("field-" + id).classList.remove("error"));
+  el.addEventListener("keydown", e => {
     if (e.key === "Enter"){
       e.preventDefault();
-      if (id === "q"){ $(id).blur(); calculate(); }
+      if (id === "q"){ el.blur(); calculate(); }
       else $(id === "w" ? "l" : "q").focus();
     }
   });
 });
 
-/* service worker: офлайн-режим */
+/* Details master toggle → re-render (opens/closes all) */
+$("detailsToggle").addEventListener("change", () => {
+  if (lastResult) renderBoxes(lastResult, lastRoll);
+});
+
+/* Box list delegation: individual expand + "Подробнее" */
+$("boxList").addEventListener("click", e => {
+  const toggleBtn = e.target.closest("[data-toggle]");
+  if (toggleBtn){
+    toggleBtn.closest(".box-item").classList.toggle("open");
+    return;
+  }
+  const moreBtn = e.target.closest("[data-more]");
+  if (moreBtn && lastResult){
+    const i = +moreBtn.dataset.more;
+    const [box, count] = lastResult[i];
+    const rw = rollWeight(lastRoll);
+    const gross = ceil01(count * rw + box.weight);
+    toast("Коробка " + box.width + "×" + box.length + "×" + box.height + " · " + count + " " + rollWord(count) + " · " + gross.toFixed(1) + " кг", "ok");
+  }
+});
+
+/* PDF header button */
+$("pdfBtn").addEventListener("click", () => {
+  if (!lastResult){ toast("Сначала выполните расчет.", "err"); return; }
+  window.print();
+});
+
+/* Bottom navigation */
+$("bottomNav").addEventListener("click", e => {
+  const tab = e.target.closest(".nav-tab");
+  if (tab) switchScreen(tab.dataset.screen);
+});
+
+/* Catalog actions */
+$("catalogList").addEventListener("click", e => {
+  const del = e.target.closest("[data-del]");
+  if (del){
+    const list = loadCatalog();
+    list.splice(+del.dataset.del, 1);
+    saveCatalog(list); renderCatalog();
+    toast("Коробка удалена", "ok");
+    return;
+  }
+  const edit = e.target.closest("[data-edit]");
+  if (edit){
+    const list = loadCatalog();
+    const b = list[+edit.dataset.edit];
+    const val = prompt("Размер коробки (Ш×Д×В, мм):", b.w + "x" + b.l + "x" + b.h);
+    if (val){
+      const m = val.replace(/[×,]/g, "x").split("x").map(s => parseInt(s.trim(), 10));
+      if (m.length === 3 && m.every(n => n > 0)){
+        b.w = m[0]; b.l = m[1]; b.h = m[2];
+        saveCatalog(list); renderCatalog();
+        toast("Коробка обновлена", "ok");
+      } else toast("Неверный формат размера", "err");
+    }
+  }
+});
+$("addBoxBtn").addEventListener("click", () => {
+  const val = prompt("Новая коробка (Ш×Д×В, мм):", "300x300x220");
+  if (!val) return;
+  const m = val.replace(/[×,]/g, "x").split("x").map(s => parseInt(s.trim(), 10));
+  if (m.length === 3 && m.every(n => n > 0)){
+    const list = loadCatalog();
+    list.push({w: m[0], l: m[1], h: m[2], wt: 0.2});
+    saveCatalog(list); renderCatalog();
+    toast("Коробка добавлена", "ok");
+  } else toast("Неверный формат размера", "err");
+});
+
+/* History repeat */
+$("historyList").addEventListener("click", e => {
+  const rep = e.target.closest("[data-repeat]");
+  if (!rep) return;
+  const h = loadHistory()[+rep.dataset.repeat];
+  if (!h) return;
+  $("w").value = h.w; $("l").value = h.l; $("q").value = h.q;
+  switchScreen("calc");
+  calculate();
+});
+
+/* Settings */
+const TKEY = "packing_theme";
+function applyTheme(theme){
+  document.documentElement.setAttribute("data-theme", theme);
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", theme === "light" ? "#EEF2F8" : "#07111F");
+  $("themeToggle").checked = (theme === "dark");
+}
+applyTheme(localStorage.getItem(TKEY) || "dark");
+$("themeToggle").addEventListener("change", () => {
+  const theme = $("themeToggle").checked ? "dark" : "light";
+  localStorage.setItem(TKEY, theme);
+  applyTheme(theme);
+});
+$("langRow").addEventListener("click", () => {
+  toast("Язык: Русский (по умолчанию)", "ok");
+});
+$("exportPdf").addEventListener("click", () => {
+  if (!lastResult) toast("Сначала выполните расчет.", "err");
+  else { switchScreen("calc"); setTimeout(() => window.print(), 100); }
+});
+$("exportExcel").addEventListener("click", () => {
+  if (!lastResult){ toast("Сначала выполните расчет.", "err"); return; }
+  const rw = rollWeight(lastRoll);
+  let csv = "﻿№;Коробка;Рулонов;Вес брутто (кг)\n";
+  lastResult.forEach(([box, count], i) => {
+    const gross = ceil01(count * rw + box.weight);
+    csv += (i+1) + ";" + box.width + "x" + box.length + "x" + box.height + ";" + count + ";" + gross.toFixed(1) + "\n";
+  });
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "packing.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Экспортировано в CSV", "ok");
+});
+$("clearHistory").addEventListener("click", () => {
+  localStorage.removeItem(HKEY);
+  renderHistory();
+  toast("История очищена", "ok");
+});
+$("aboutRow").addEventListener("click", () => {
+  toast("Калькулятор упаковки готовых рулонов · MAX 21 кг/коробка", "ok");
+});
+
+/* Service worker: офлайн-режим */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }

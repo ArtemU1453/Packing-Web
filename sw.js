@@ -1,4 +1,4 @@
-const CACHE = "packing-v2";
+const CACHE = "packing-v3";
 const ASSETS = [
   ".",
   "index.html",
