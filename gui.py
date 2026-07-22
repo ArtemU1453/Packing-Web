@@ -1,4 +1,4 @@
-﻿import tkinter as tk
+import tkinter as tk
 from tkinter import messagebox
 import math
 
@@ -162,9 +162,9 @@ class App:
         fields = tk.Frame(parent, bg=self.palette["panel"])
         fields.pack(fill="x", padx=16)
 
-        self.width_entry = self._labeled_entry(fields, "Ширина рулона (мм)", " ")
-        self.length_entry = self._labeled_entry(fields, "Намотка (м)", " ")
-        self.qty_entry = self._labeled_entry(fields, "Количество", " ")
+        self.width_entry = self._labeled_entry(fields, "Ширина рулона (мм) · например 55", "")
+        self.length_entry = self._labeled_entry(fields, "Намотка (м) · 300, 450 или 600", "")
+        self.qty_entry = self._labeled_entry(fields, "Количество · например 128", "")
 
         buttons = tk.Frame(parent, bg=self.palette["panel"])
         buttons.pack(fill="x", padx=16, pady=(18, 8))
@@ -187,6 +187,24 @@ class App:
         )
         calc_btn.pack(side="left", fill="x", expand=True)
 
+        demo_btn = tk.Button(
+            buttons,
+            text="Пример",
+            command=self.fill_demo,
+            bg=self.palette["accent_cyan"],
+            fg="#04111F",
+            activebackground=self.palette["accent_cyan_active"],
+            activeforeground="#04111F",
+            relief="flat",
+            font=("Bahnschrift", 11, "bold"),
+            cursor="hand2",
+            padx=12,
+            pady=8,
+            highlightthickness=1,
+            highlightbackground=self.palette["line"],
+        )
+        demo_btn.pack(side="left", padx=(10, 0))
+
         clear_btn = tk.Button(
             buttons,
             text="Очистить",
@@ -207,7 +225,7 @@ class App:
 
         hint = tk.Label(
             parent,
-            text="После расчета справа формируется отчет по коробкам и весу партии.",
+            text="Поддерживается ввод с точкой или запятой. Кнопка «Пример» быстро заполняет тестовые параметры.",
             wraplength=290,
             justify="left",
             bg=self.palette["panel"],
@@ -273,11 +291,16 @@ class App:
         self.output.tag_configure("header", foreground=self.palette["accent_gold"], font=("Consolas", 10, "bold"))
         self.output.tag_configure("muted", foreground=self.palette["muted"])
 
+    @staticmethod
+    def _parse_decimal(value):
+        return float(value.strip().replace(",", "."))
+
     def _parse_inputs(self):
         try:
-            width = float(self.width_entry.get())
-            length = float(self.length_entry.get())
-            qty = int(self.qty_entry.get())
+            width = self._parse_decimal(self.width_entry.get())
+            length = self._parse_decimal(self.length_entry.get())
+            qty_text = self.qty_entry.get().strip()
+            qty = int(qty_text)
         except ValueError as exc:
             raise ValueError("Введите числовые значения ширины, намотки и количества.") from exc
 
@@ -290,6 +313,15 @@ class App:
         self.width_entry.delete(0, tk.END)
         self.length_entry.delete(0, tk.END)
         self.qty_entry.delete(0, tk.END)
+        self.output.delete(1.0, tk.END)
+        self.width_entry.focus_set()
+
+    def fill_demo(self):
+        self.clear_inputs()
+        self.width_entry.insert(0, "55")
+        self.length_entry.insert(0, "450")
+        self.qty_entry.insert(0, "128")
+        self.calculate()
 
     def calculate(self, event=None):
         try:
