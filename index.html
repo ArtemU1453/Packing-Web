@@ -37,13 +37,14 @@ body::before{
   background-image:radial-gradient(#17355C 1px, transparent 1px);
   background-size:17px 10px; opacity:.5;
 }
-.wrap{position:relative; z-index:1; max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:12px;}
+.wrap{position:relative; z-index:1; max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:12px;}
 
 header{
-  background:var(--panel-alt);
+  background:linear-gradient(135deg,var(--panel-alt),#0B1830 72%);
   border:1px solid var(--line);
   border-top:2px solid #2B5D92;
-  padding:14px 16px 12px;
+  padding:16px;
+  box-shadow:0 18px 45px rgba(0,0,0,.24);
 }
 h1{
   color:var(--metal); font-size:19px; font-weight:700;
@@ -55,9 +56,10 @@ h1{
 }
 
 .panel{
-  background:var(--panel);
+  background:linear-gradient(180deg,var(--panel),#0A1428);
   border:1px solid var(--line-soft);
   padding:16px;
+  box-shadow:0 14px 36px rgba(0,0,0,.18);
 }
 .panel h2{
   color:var(--metal); font-size:15px; font-weight:700; margin-bottom:14px;
@@ -79,10 +81,10 @@ input{
   outline:none;
   appearance:none;
 }
-input:focus{border-color:var(--cyan);}
+input:focus{border-color:var(--cyan); box-shadow:0 0 0 2px rgba(60,184,217,.16);}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;}
 
-.btns{display:flex; gap:10px; margin-top:4px;}
+.btns{display:flex; gap:10px; margin-top:4px; flex-wrap:wrap;}
 button{
   border:1px solid var(--line);
   font-family:inherit; font-weight:700; font-size:14px;
@@ -94,6 +96,8 @@ button{
 #calc:active{background:var(--green-a);}
 #clear{background:var(--gold); color:#1A1D24;}
 #clear:active{background:var(--gold-a);}
+#demo{background:var(--panel-alt); color:var(--metal);}
+#demo:active{background:#183057;}
 
 .err{
   display:none;
@@ -112,10 +116,16 @@ button{
   font-size:12.5px;
   line-height:1.55;
   padding:12px;
-  min-height:120px;
+  min-height:160px;
   white-space:pre-wrap;
   word-break:break-word;
 }
+.stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-bottom:10px;}
+.stat{border:1px solid var(--line-soft); background:#0A1830; padding:10px;}
+.stat b{display:block; color:var(--gold); font-size:16px;}
+.stat span{color:var(--muted); font-size:10.5px;}
+.tip{margin-top:10px; color:var(--muted); font-size:11px; line-height:1.45; font-family:ui-monospace,Consolas,Menlo,monospace;}
+@media (max-width:520px){.stats{grid-template-columns:1fr;} button{width:100%;}}
 .out .hdr{color:var(--gold); font-weight:700;}
 .out .mut{color:var(--muted);}
 .out:empty::before{
@@ -138,16 +148,18 @@ button{
   <section class="panel">
     <h2>Параметры</h2>
     <label for="w">Ширина рулона (мм)</label>
-    <input id="w" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next">
+    <input id="w" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="например 55">
     <label for="l">Намотка (м)</label>
-    <input id="l" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next">
+    <input id="l" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next" placeholder="300, 450 или 600">
     <label for="q">Количество</label>
-    <input id="q" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done">
+    <input id="q" type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="например 128">
     <div class="btns">
       <button id="calc">Рассчитать упаковку</button>
+      <button id="demo" type="button">Пример</button>
       <button id="clear">Очистить</button>
     </div>
     <div class="err" id="err"></div>
+    <div class="tip">Поддерживается ввод с точкой или запятой. Enter переводит фокус к следующему полю, а в поле количества запускает расчет.</div>
   </section>
 
   <section class="panel">
@@ -413,10 +425,7 @@ function calculate(){
     return;
   }
 
-  let html = '<span class="hdr">СВОДКА УПАКОВКИ ГОТОВЫХ РУЛОНОВ</span>\n';
-  html += '<span class="mut">Параметры: ширина ' + width.toFixed(0) + ' мм, намотка ' +
-          length.toFixed(0) + ' м, количество ' + qty + ' шт.</span>\n\n';
-
+  let lines = [];
   let totalWeight = 0, totalRolls = 0;
   const rw = rollWeight(roll);
 
@@ -426,19 +435,31 @@ function calculate(){
     totalRolls += count;
     const rep = ceil01(bw);
     const idx = String(i+1).padStart(2,"0");
-    html += esc(idx + ". Коробка " + box.width + "x" + box.length + "x" + box.height +
-            " мм | рулонов: " + count + " | вес брутто: " + rep.toFixed(1) + " кг") + "\n";
+    lines.push(esc(idx + ". Коробка " + box.width + "×" + box.length + "×" + box.height +
+            " мм | рулонов: " + count + " | вес брутто: " + rep.toFixed(1) + " кг"));
   });
 
   const totalRep = ceil01(totalWeight);
-  html += '\n<span class="mut">Итого коробок: ' + result.length +
-          '\nИтого рулонов: ' + totalRolls +
-          '\nОбщий вес партии: ' + totalRep.toFixed(1) + ' кг</span>\n';
+  let html = '<div class="stats">' +
+    '<div class="stat"><b>' + result.length + '</b><span>коробок</span></div>' +
+    '<div class="stat"><b>' + totalRolls + '</b><span>рулонов</span></div>' +
+    '<div class="stat"><b>' + totalRep.toFixed(1) + ' кг</b><span>общий вес</span></div>' +
+    '</div>';
+  html += '<span class="hdr">СВОДКА УПАКОВКИ ГОТОВЫХ РУЛОНОВ</span>\n';
+  html += '<span class="mut">Параметры: ширина ' + width.toFixed(0) + ' мм, намотка ' +
+          length.toFixed(0) + ' м, количество ' + qty + ' шт.</span>\n\n';
+  html += lines.join("\n") + "\n";
 
   out.innerHTML = html;
 }
 
 $("calc").addEventListener("click", calculate);
+$("demo").addEventListener("click", () => {
+  $("w").value = "55";
+  $("l").value = "450";
+  $("q").value = "128";
+  calculate();
+});
 $("clear").addEventListener("click", () => {
   ["w","l","q"].forEach(id => $(id).value = "");
   out.innerHTML = "";

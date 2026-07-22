@@ -1,9 +1,16 @@
-﻿from models import BOXES, Box
+"""Legacy packing algorithm.
 
-MAX_BOX_WEIGHT = 21.0
+The calculation sequence is intentionally preserved during refactoring.
+"""
+
+from dataclasses import dataclass
+
+from app.constants import MAX_BOX_WEIGHT
+from models import BOXES, Box, Roll
+
 EXCLUDED_BOX_DIMS = {(400, 200, 320), (200, 200, 220)}
 
-# Full-box capacity matrix keyed by (box_dims) -> {(roll_width, roll_length): rolls_per_box}
+# Full-box capacity matrix keyed by box dimensions and roll size.
 PACKING_MATRIX = {
     (300, 300, 220): {
         (20, 300): 200,
@@ -83,15 +90,27 @@ PACKING_MATRIX = {
     },
 }
 
-_BOX_WEIGHTS = {(w, l, h): weight for w, l, h, weight in BOXES}
+_BOX_WEIGHTS: dict[tuple[int, int, int], float] = {
+    (width, length, height): weight for width, length, height, weight in BOXES
+}
 
 
-def _build_box(box_dims):
+@dataclass(slots=True, frozen=True)
+class _PackingPlan:
+    score: tuple[int, int, int, float, int]
+    full_box: Box
+    full_capacity: int
+    full_count: int
+    remaining: int
+    partial_box: Box | None
+
+
+def _build_box(box_dims: tuple[int, int, int]) -> Box:
     width, length, height = box_dims
     return Box(width, length, height, _BOX_WEIGHTS.get(box_dims, 0.0))
 
 
-def _weight_limited_capacity(box, roll):
+def _weight_limited_capacity(box: Box, roll: Roll) -> int:
     roll_weight = roll.weight()
     available_weight = MAX_BOX_WEIGHT - box.weight
     if roll_weight <= 0 or available_weight <= 0:
@@ -99,7 +118,7 @@ def _weight_limited_capacity(box, roll):
     return int(available_weight // roll_weight)
 
 
-def _geometric_capacity(box, roll):
+def _geometric_capacity(box: Box, roll: Roll) -> int:
     diameter = roll.diameter_mm
     if diameter <= 0 or roll.width_mm <= 0:
         return 0
@@ -110,11 +129,14 @@ def _geometric_capacity(box, roll):
     return cols * rows * layers
 
 
-def _max_rolls_for_box(box, roll):
-    return max(0, min(_geometric_capacity(box, roll), _weight_limited_capacity(box, roll)))
+def _max_rolls_for_box(box: Box, roll: Roll) -> int:
+    return max(
+        0,
+        min(_geometric_capacity(box, roll), _weight_limited_capacity(box, roll)),
+    )
 
 
-def _matrix_candidates(roll):
+def _matrix_candidates(roll: Roll) -> list[tuple[Box, int]]:
     roll_key = (int(round(roll.width_mm)), int(round(roll.length_m)))
     candidates = []
 
@@ -134,7 +156,7 @@ def _matrix_candidates(roll):
     return candidates
 
 
-def _fallback_candidates(roll):
+def _fallback_candidates(roll: Roll) -> list[tuple[Box, int]]:
     candidates = []
     for width, length, height, weight in BOXES:
         if (width, length, height) in EXCLUDED_BOX_DIMS:
@@ -147,7 +169,7 @@ def _fallback_candidates(roll):
     return candidates
 
 
-def _single_box_candidates(roll):
+def _single_box_candidates(roll: Roll) -> list[tuple[Box, int]]:
     """
     Candidates for packing one (possibly non-full) box.
     Matrix capacities override geometric capacities for the same box dimensions.
@@ -167,7 +189,10 @@ def _single_box_candidates(roll):
     return list(candidates.values())
 
 
-def _best_fitting_box(candidates, required_count):
+def _best_fitting_box(
+    candidates: list[tuple[Box, int]],
+    required_count: int,
+) -> tuple[Box, int] | None:
     fitting = [item for item in candidates if item[1] >= required_count]
     if not fitting:
         return None
@@ -177,7 +202,11 @@ def _best_fitting_box(candidates, required_count):
     )
 
 
-def _best_plan_min_free_space(total_quantity, full_candidates, one_box_candidates):
+def _best_plan_min_free_space(
+    total_quantity: int,
+    full_candidates: list[tuple[Box, int]],
+    one_box_candidates: list[tuple[Box, int]],
+) -> _PackingPlan | None:
     best_plan = None
 
     for full_box, full_capacity in full_candidates:
@@ -210,21 +239,22 @@ def _best_plan_min_free_space(total_quantity, full_candidates, one_box_candidate
                 -full_capacity,
             )
 
-            if best_plan is None or score < best_plan["score"]:
-                best_plan = {
-                    "score": score,
-                    "full_box": full_box,
-                    "full_capacity": full_capacity,
-                    "full_count": full_count,
-                    "remaining": remaining,
-                    "partial_box": partial_box,
-                }
+            if best_plan is None or score < best_plan.score:
+                best_plan = _PackingPlan(
+                    score=score,
+                    full_box=full_box,
+                    full_capacity=full_capacity,
+                    full_count=full_count,
+                    remaining=remaining,
+                    partial_box=partial_box,
+                )
 
     return best_plan
 
 
-def pack_rolls(roll, quantity):
-    boxes_used = []
+def pack_rolls(roll: Roll, quantity: int) -> list[tuple[Box, int]]:
+    """Pack rolls into boxes using the legacy optimization sequence."""
+    boxes_used: list[tuple[Box, int]] = []
     remaining = int(quantity)
 
     if remaining <= 0:
@@ -236,16 +266,23 @@ def pack_rolls(roll, quantity):
 
     matrix_candidates = _matrix_candidates(roll)
     full_candidates = matrix_candidates if matrix_candidates else one_box_candidates
-    best_plan = _best_plan_min_free_space(remaining, full_candidates, one_box_candidates)
+    best_plan = _best_plan_min_free_space(
+        remaining, full_candidates, one_box_candidates
+    )
     if not best_plan:
-        raise ValueError("Не удалось подобрать комбинацию упаковки для данного типа рулона.")
-
-    if best_plan["full_count"] > 0:
-        boxes_used.extend(
-            [(best_plan["full_box"], best_plan["full_capacity"])] * best_plan["full_count"]
+        raise ValueError(
+            "Не удалось подобрать комбинацию упаковки для данного типа рулона."
         )
 
-    if best_plan["remaining"] > 0:
-        boxes_used.append((best_plan["partial_box"], best_plan["remaining"]))
+    if best_plan.full_count > 0:
+        boxes_used.extend(
+            [(best_plan.full_box, best_plan.full_capacity)] * best_plan.full_count
+        )
+
+    if best_plan.remaining > 0:
+        partial_box = best_plan.partial_box
+        if partial_box is None:
+            raise ValueError("Не удалось подобрать коробку для остатка рулонов.")
+        boxes_used.append((partial_box, best_plan.remaining))
 
     return boxes_used
